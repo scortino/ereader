@@ -1,11 +1,6 @@
 import ctypes as ct
-from numpy.ctypeslib import ndpointer, as_array
 import numpy as np
 import pandas as pd
-
-
-# Compile dynamic library
-# os.popen("gcc -g -fPIC -Wall -Werror -Wextra -pedantic econverts_func.c -shared -o econverts_func.so")
 
 # Load C dynamic library
 libc = ct.cdll.LoadLibrary("./ereader.so")
@@ -75,13 +70,13 @@ def read_wf1(infile: str):
     varlengths_ptr = res.VarLengths
 
     # Get array from pointer
-    varlengths_ar = as_array(varlengths_ptr, shape=(globnumvars, ))
+    varlengths_ar = np.ctypeslib.as_array(varlengths_ptr, shape=(globnumvars, ))
 
     # Get pointer to array containing the chars that are present variable names
     varnames_ptr = res.VarNames
 
     # Get array from pointer
-    varnames_ar = as_array(varnames_ptr, shape=(globnumvars * 32, ))
+    varnames_ar = np.ctypeslib.as_array(varnames_ptr, shape=(globnumvars * 32, ))
 
     # Decode the characters from b to utf-8 and join them into a single string
     varnames_str = ''.join(map(lambda ch: ch.decode("utf-8"), varnames_ar))
@@ -108,7 +103,7 @@ def read_wf1(infile: str):
     data_ptr = res.DataArray
 
     # Get array from pointer
-    data_ar = as_array(data_ptr, shape=(numobs * globnumvars, ))
+    data_ar = np.ctypeslib.as_array(data_ptr, shape=(numobs * globnumvars, ))
 
     # Update entries representing missing data
     data_ar[data_ar == -100000] = np.nan
@@ -117,7 +112,7 @@ def read_wf1(infile: str):
     data_ar = data_ar.reshape((numobs, globnumvars), order='F')
 
     # Create mask representing columns relative to structural variables
-    mask = np.mean(data_ar, axis=0) != -99999
+    mask = ~np.all(data_ar == -99999, axis=0)
     mask = np.arange(globnumvars)[mask]
 
     # Keep only names of variables of interest
@@ -133,3 +128,11 @@ def read_wf1(infile: str):
     free(varnames_ptr, varlengths_ptr, data_ptr)
 
     return table
+
+# Test function
+def test():
+    table = read_wf1("./test/example.WF1")
+    print(table)
+
+if __name__ == "__main__":
+    test()

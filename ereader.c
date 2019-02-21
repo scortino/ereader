@@ -1,6 +1,7 @@
 // Read information about EViews workfile (.wf1) into 
 // a structure to be handled through Python's ctypes
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,8 +38,18 @@ EVIEWSINFO read_wf1(char *infile)
     EVIEWSINFO outstruct;
     outstruct.success = false;
 
-    // Remember infile's extension
-    char *infile_ext = strrchr(infile, '.');
+    // Initialize string to hold infile's extension
+    char infile_ext[5];
+
+    // Copy file extension to newly created string
+    strcpy(infile_ext, strrchr(infile, '.'));
+
+    // Make file extension lower case
+    int i = 0;
+    while(infile_ext[i++] != '\0')
+    {
+        infile_ext[i] = tolower(infile_ext[i]);
+    }
 
     // Ensure infile is a .wf1 file
     if (strcmp(infile_ext, ".wf1") != 0)
@@ -100,7 +111,7 @@ EVIEWSINFO read_wf1(char *infile)
     EVIEWSDATABLOCK db;
 
     // Allocate memory for matrix to collect name of variables
-    outstruct.VarNames = malloc(sizeof(char) * outstruct.GlobNumVars * 32);
+    outstruct.VarNames = malloc(sizeof(char) * outstruct.GlobNumVars * MAXLEN);
     if (!outstruct.VarNames)
     {
         fprintf(stderr, "Unable to allocate memory for VarNames array\n");
@@ -139,9 +150,9 @@ EVIEWSINFO read_wf1(char *infile)
         outstruct.VarLengths[i] = l;
 
         // Store variable name in name array
-        for (int j = 0; j < 32; j++)
+        for (int j = 0; j < MAXLEN; j++)
         {
-            outstruct.VarNames[32 * i + j] = (j < l) ? vi.VarName[j] : '\0';  
+            outstruct.VarNames[MAXLEN * i + j] = (j < l) ? vi.VarName[j] : '\0';  
         }
 
         // If variable is structural or unknown

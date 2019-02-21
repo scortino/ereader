@@ -1,6 +1,11 @@
 // EViews workfile related data types
+// based on partial study of EViews workfile from Allin Cottrel (2005-2011)
+// http://ricardo.ecn.wfu.edu/~cottrell/eviews_format/
 
 #include <stdint.h>
+
+// Maximum length of variable name strings
+#define MAXLEN 32
 
 // Alias for primitive data type
 typedef uint8_t  BYTE;
@@ -56,7 +61,7 @@ typedef struct
     long DataPos;
 
     // Name of the variable, padded to the right with NULL
-    char VarName[32];
+    char VarName[MAXLEN];
 
     // Pointer to history information or zero if no history
     long PtrToHist;
